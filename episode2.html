@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Episode 2: React & Frontend | Full-Stack Curriculum</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script>
+<style>
+:root{--bg:#fff;--text:#111;--primary:#2563eb;--code-bg:#f5f7fa;--border:#e2e8f0;--note:#eff6ff;--warn:#fef2f2;--ok:#f0fdf4}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:var(--text);background:var(--bg);max-width:960px;margin:0 auto;padding:2rem}
+h1{border-bottom:3px solid var(--primary);padding-bottom:.5rem;margin-bottom:1rem}
+h2{margin-top:2.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+h3{margin-top:1.5rem;color:#334155}
+nav{background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:2rem;border:1px solid var(--border)}
+nav a{display:block;padding:.4rem 0;color:var(--primary);text-decoration:none}
+pre{background:var(--code-bg);padding:1rem;border-radius:6px;overflow-x:auto;border:1px solid var(--border);font-size:.9em}
+code{font-family:'Fira Code',Consolas,monospace}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
+th{background:#f1f5f9;font-weight:600}
+.mermaid{display:flex;justify-content:center;margin:1.5rem 0}
+.note{background:var(--note);border-left:4px solid var(--primary);padding:1rem;margin:1rem 0;border-radius:0 6px 6px 0}
+@media print{body{max-width:100%;padding:1rem}pre{white-space:pre-wrap}.no-print{display:none}}</style>
+</head>
+<body>
+<header><h1>Episode 2: React & Frontend Architecture</h1><p>Components, State, Hooks, Next.js → Production UI</p></header>
+<nav><h3>Contents</h3><a href="#s1">1. Why React? Declarative UI</a><a href="#s2">2. Components & Props</a><a href="#s3">3. State & Re-renders</a><a href="#s4">4. Hooks & useEffect</a><a href="#s5">5. Architecture & Patterns</a><a href="#s6">6. State Management</a><a href="#s7">7. Performance</a><a href="#s8">8. Next.js Mastery</a><a href="#s9">9. Advanced Forms</a></nav>
+<main>
+<section style="margin:3rem 0 1rem;padding:1.25rem;border:1px solid var(--border);border-radius:14px;background:#f8fafc">
+<h2>Quick References & Next Steps</h2>
+<p>Use this section to revisit component thinking, hooks, and the architecture choices that separate a demo UI from a maintainable frontend.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Key topics</h3>
+<ul>
+<li>Declarative rendering and component composition</li>
+<li>State, props, hooks, and re-render behavior</li>
+<li>Next.js routing, server components, and forms</li>
+<li>Performance: memoization, code splitting, and image loading</li>
+</ul>
+</div>
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Reference links</h3>
+<ul>
+<li><a href="https://react.dev/" target="_blank" rel="noopener noreferrer">React official docs</a></li>
+<li><a href="https://nextjs.org/docs" target="_blank" rel="noopener noreferrer">Next.js documentation</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/Performance" target="_blank" rel="noopener noreferrer">MDN: Web performance</a></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="s1"><h2>1. Why React? The Modern UI Paradigm</h2>
+<div class="mermaid">graph LR
+A[Traditional jQuery] --> B[Manual DOM Manipulation] --> C[State Sync Bugs]
+D[React] --> E[Declarative UI] --> F[UI = f(state)] --> G[Automatic DOM Updates]</div>
+<pre><code>// ❌ Imperative
+$('#name').text(user.name);
+$('#badge').show();
+
+// ✅ Declarative
+function UserProfile({ user }) {
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;{user.name}&lt;/h2&gt;
+      {user.isPremium && &lt;Badge /&gt;}
+    &lt;/div&gt;
+  );
+}</code></pre>
+<div class="note">🔄 <strong>Virtual DOM:</strong> React diffs in-memory tree → patches only changed nodes. Faster than manual DOM calls.</div></section>
+
+<section id="s2"><h2>2. Components & Props</h2>
+<pre><code>const ProductCard = ({ product, onAddToCart }) => {
+  if (!product) return &lt;EmptyState /&gt;;
+  return (
+    &lt;article className="card"&gt;
+      &lt;img src={product.image} alt={product.alt} loading="lazy" /&gt;
+      &lt;h3&gt;{product.name}&lt;/h3&gt;
+      &lt;p&gt;${product.price.toFixed(2)}&lt;/p&gt;
+      &lt;button onClick={() => onAddToCart(product.id)}&gt;
+        {product.stock > 0 ? 'Add' : 'Out of Stock'}
+      &lt;/button&gt;
+    &lt;/article&gt;
+  );
+};</code></pre>
+<div class="mermaid">graph TD
+A[App] -->|props| B[Header]
+A -->|props| C[Main] -->|props| D[UserProfile] -->|props| E[Avatar]
+note right of E: 😫 Prop Drilling Problem</div>
+<p><strong>Solutions:</strong> Composition, Context API, Zustand/Redux</p></section>
+
+<section id="s3"><h2>3. State & Re-renders</h2>
+<pre><code>// ✅ Functional update (safe)
+const safeIncrement = () => setCount(prev => prev + 1);
+
+// ❌ Derived state anti-pattern
+// const [filteredTodos, setFilteredTodos] = useState([]);
+
+// ✅ Compute during render
+const filteredTodos = useMemo(() => todos.filter(t => ...), [todos, filter]);</code></pre>
+<div class="mermaid">graph LR
+A[Re-render Trigger] --> B[State Change]
+A --> C[Props Change]
+A --> D[Context Change]
+A --> E[Parent Re-render]
+E --> F[✅ Optimize: React.memo, useMemo]</div></section>
+
+<section id="s4"><h2>4. Hooks & useEffect</h2>
+<pre><code>useEffect(() => {
+  let cancelled = false;
+  const controller = new AbortController();
+  fetchUser(userId).then(d => !cancelled && setUser(d));
+  return () => { cancelled = true; controller.abort(); }; // Cleanup
+}, [userId]); // ✅ Dependencies!</code></pre>
+<p><strong>Rules of Hooks:</strong><br>1. Only call at top level<br>2. Only from React functions<br>3. Never in loops/conditions/nested functions</p></section>
+
+<section id="s5"><h2>5. Component Architecture</h2>
+<p><strong>Smart vs Dumb:</strong><br>• Smart: Fetches data, manages state, passes callbacks<br>• Dumb: Receives props, renders UI, emits events</p>
+<pre><code>// Smart Container
+function UserDashboard({ userId }) {
+  const { data } = useFetch(`/api/users/${userId}`);
+  return &lt;DashboardView user={data} onUpdate={handleUpdate} /&gt;;
+}
+
+// Dumb View
+function DashboardView({ user, onUpdate }) {
+  return &lt;ProfileForm values={user} onSubmit={onUpdate} /&gt;;
+}</code></pre></section>
+
+<section id="s6"><h2>6. State Management</h2>
+<table><tr><th>Scope</th><th>Tool</th></tr><tr><td>Local Component</td><td><code>useState</code></td></tr><tr><td>Siblings</td><td>Lift State Up</td></tr><tr><td>Global (Simple)</td><td>Context API</td></tr><tr><td>Global (Complex)</td><td>Zustand / Redux Toolkit</td></tr></table>
+<pre><code>// Zustand: Minimalist
+import { create } from 'zustand';
+const useCart = create(set => ({
+  items: [],
+  addItem: p => set(s => ({ items: [...s.items, p] })),
+  total: (s) => s.items.reduce((a,b) => a+b.price, 0)
+}));</code></pre></section>
+
+<section id="s7"><h2>7. Performance Optimization</h2>
+<pre><code>// 1. Memoize component
+const Heavy = React.memo(({ data }) => ...);
+
+// 2. Stable callbacks
+const handleClick = useCallback(() => console.log(count), [count]);
+
+// 3. Code splitting
+const Dashboard = lazy(() => import('./Dashboard'));
+&lt;Suspense fallback=&lt;Skeleton /&gt;&gt;
+  &lt;Dashboard /&gt;
+&lt;/Suspense&gt;</code></pre>
+<div class="note">📊 <strong>Lighthouse Targets:</strong> FCP &lt;1.8s | LCP &lt;2.5s | CLS &lt;0.1 | TTI &lt;3.8s</div></section>
+
+<section id="s8"><h2>8. Next.js Mastery</h2>
+<div class="mermaid">graph LR
+A[Request] --> B{Static?} -->|Yes| C[SSG/ISR]
+B -->|No| D[SSR]
+D --> E[Client Component]
+C & D --> F[HTML + JS Bundle]</div>
+<pre><code>// Server Component (default)
+export default async function Page({ params }) {
+  const data = await db.post.find(params.slug); // Direct DB!
+  return &lt;Post post={data} /&gt;;
+}
+
+// Client Component
+'use client';
+export function Counter() {
+  const [count, setCount] = useState(0);
+  return &lt;button onClick={() => setCount(c => c+1)}&gt;{count}&lt;/button&gt;
+}</code></pre>
+<p><strong>Rendering Strategies:</strong><br>• SSG: Pre-build (fastest)<br>• SSR: Build per request (fresh)<br>• ISR: Update static pages without full rebuild</p></section>
+
+<section id="s9"><h2>9. Advanced Forms</h2>
+<pre><code>// React Hook Form + Zod
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { userSchema } from '@/schemas';
+
+const { register, handleSubmit, formState: { errors } } = useForm({
+  resolver: zodResolver(userSchema)
+});
+
+&lt;form onSubmit={handleSubmit(onSubmit)}&gt;
+  &lt;input {...register('email')} /&gt;
+  {errors.email && &lt;p&gt;{errors.email.message}&lt;/p&gt;}
+  &lt;button type="submit"&gt;Save&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+</section>
+</main>
+<footer class="no-print" style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center;color:#64748b">
+<p>Episode 2 Complete | Next: Episode 3 - Node.js & Backend<br>🖨️ Print/PDF: <code>Ctrl+P</code> → Save as PDF</p>
+</footer>
+</body>
+</html>

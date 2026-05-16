@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Episode 4: Generative AI | Full-Stack Curriculum</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script>
+<style>
+:root{--bg:#fff;--text:#111;--primary:#2563eb;--code-bg:#f5f7fa;--border:#e2e8f0;--note:#eff6ff;--warn:#fef2f2;--ok:#f0fdf4}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:var(--text);background:var(--bg);max-width:960px;margin:0 auto;padding:2rem}
+h1{border-bottom:3px solid var(--primary);padding-bottom:.5rem;margin-bottom:1rem}
+h2{margin-top:2.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+pre{background:var(--code-bg);padding:1rem;border-radius:6px;overflow-x:auto;border:1px solid var(--border);font-size:.9em}
+code{font-family:'Fira Code',Consolas,monospace}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
+th{background:#f1f5f9}
+.mermaid{display:flex;justify-content:center;margin:1.5rem 0}
+.note{background:var(--note);border-left:4px solid var(--primary);padding:1rem;margin:1rem 0;border-radius:0 6px 6px 0}
+@media print{body{max-width:100%;padding:1rem}pre{white-space:pre-wrap}.no-print{display:none}}</style>
+</head>
+<body>
+<header><h1>Episode 4: Generative AI Engineering</h1><p>LLMs, RAG, Agents, Structured Outputs → AI Integration</p></header>
+<nav><h3>Contents</h3><a href="#s1">1. LLM Fundamentals</a><a href="#s2">2. API Best Practices</a><a href="#s3">3. Prompt Engineering</a><a href="#s4">4. Schema Validation</a><a href="#s5">5. Tool Calling</a><a href="#s6">6. Streaming</a><a href="#s7">7. RAG Pipeline</a><a href="#s8">8. Agents & LangChain</a><a href="#s9">9. Evaluation</a></nav>
+<main>
+<section style="margin:3rem 0 1rem;padding:1.25rem;border:1px solid var(--border);border-radius:14px;background:#f8fafc">
+<h2>Quick References & Next Steps</h2>
+<p>This episode moves from plain API calls to agent-style systems, so the best follow-up is to compare prompting, structured outputs, and retrieval workflows in the official docs.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Key topics</h3>
+<ul>
+<li>Prompt design and reliable instructions</li>
+<li>Structured outputs and schema validation</li>
+<li>RAG pipelines, embeddings, and vector search</li>
+<li>Tool calling, retries, and guardrails</li>
+</ul>
+</div>
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Reference links</h3>
+<ul>
+<li><a href="https://platform.openai.com/docs" target="_blank" rel="noopener noreferrer">OpenAI API docs</a></li>
+<li><a href="https://docs.anthropic.com/" target="_blank" rel="noopener noreferrer">Anthropic docs</a></li>
+<li><a href="https://docs.langchain.com/" target="_blank" rel="noopener noreferrer">LangChain documentation</a></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="s1"><h2>1. LLM Fundamentals</h2>
+<div class="mermaid">graph LR
+A[Input Text] --> B[Tokenizer] --> C[Tokens] --> D[Context Window] --> E[Model] --> F[Output Tokens]</div>
+<table><tr><th>Parameter</th><th>Effect</th><th>Use Case</th></tr>
+<tr><td><code>temperature</code></td><td>Randomness (0→2)</td><td>Factual: 0.1 | Creative: 0.8</td></tr>
+<tr><td><code>top_p</code></td><td>Nucleus sampling</td><td>Reduce weird outputs: 0.9</td></tr>
+<tr><td><code>max_tokens</code></td><td>Response length limit</td><td>Prevent context overflow</td></tr></table></section>
+
+<section id="s2"><h2>2. API Best Practices</h2>
+<pre><code>class LLMClient {
+  async retryWithBackoff(fn, max=3) {
+    for(let i=1;i<=max;i++){
+      try{ return await fn(); }
+      catch(e){
+        if(e.status===429){ await sleep(1000*Math.pow(2,i-1)); continue; }
+        if(e.status>=500&&i<max){ await sleep(1000*Math.pow(2,i-1)); continue; }
+        throw e;
+      }
+    }
+  }
+}</code></pre>
+<div class="note">💰 <strong>Cost Awareness:</strong> Budget tokens per request. Log usage. Use cheaper models for drafting/summarization.</div></section>
+
+<section id="s3"><h2>3. Prompt Engineering</h2>
+<pre><code>// Structured JSON Prompt
+const prompt = `
+Analyze this profile. Return ONLY valid JSON:
+{
+  "compatibility_score": number (0-100),
+  "strengths": string[],
+  "weaknesses": string[],
+  "suggested_openers": string[]
+}
+Profile: {{profile}}
+Rules: No markdown. No explanations. Keep suggestions <20 words.
+`;</code></pre>
+<p><strong>Techniques:</strong> Few-shot examples, explicit formatting, constraint listing, temperature control.</p></section>
+
+<section id="s4"><h2>4. Schema Validation with Zod</h2>
+<pre><code>import { z } from 'zod';
+const Schema = z.object({
+  compatibility_score: z.number().min(0).max(100),
+  strengths: z.array(z.string().min(1)),
+  weaknesses: z.array(z.string().min(1)),
+  suggested_openers: z.array(z.string().min(1)).max(5)
+});
+
+async function safeParse(raw) {
+  const result = Schema.safeParse(JSON.parse(raw));
+  if(!result.success) throw new Error('Validation failed');
+  return result.data;
+}</code></pre>
+<div class="success">🔒 <strong>Golden Rule:</strong> Never trust AI output. Always validate before using in code.</div></section>
+
+<section id="s5"><h2>5. Tool/Function Calling</h2>
+<div class="mermaid">sequenceDiagram
+User->>Router: "Improve my bio"
+Router->>Router: Classify intent
+Router->>Tool: execute('improveBio', args)
+Tool->>Tool: Run deterministic + optional LLM
+Tool-->>Router: { improved_bio: "..." }
+Router-->>User: Formatted response</div>
+<pre><code>const tools = {
+  improveBio: {
+    description: 'Improve dating bio',
+    parameters: { current_bio: String, target: ['casual','serious'] },
+    execute: async ({ current_bio, target }) => {
+      // Deterministic logic + LLM if needed
+      return { improved_bio: '...' };
+    }
+  }
+};</code></pre></section>
+
+<section id="s6"><h2>6. Streaming Responses</h2>
+<pre><code>// SSE Server
+res.setHeader('Content-Type','text/event-stream');
+for await(const chunk of stream){
+  res.write(`data: ${JSON.stringify({token: chunk.content})}\n\n`);
+}
+res.write(`data: ${JSON.stringify({type:'done'})}\n\n`);
+res.end();
+
+// Client React Hook
+const [content, setContent] = useState('');
+eventSource.onmessage = e => setContent(p => p + JSON.parse(e.data).token);</code></pre></section>
+
+<section id="s7"><h2>7. RAG Pipeline</h2>
+<div class="mermaid">sequenceDiagram
+User->>RAG: Query
+RAG->>VectorDB: Search top-K chunks
+VectorDB-->>RAG: [chunk1, chunk2, chunk3]
+RAG->>LLM: Prompt: Context + Query
+LLM-->>RAG: Structured answer + confidence
+RAG-->>User: { answer, sources, confidence }</div>
+<pre><code>// Chunking + Embedding
+const chunks = recursiveChunker(text, { size:800, overlap:150 });
+const embedding = await openai.embeddings.create({ input: chunk });
+await pinecone.index.upsert([{ id, values: embedding, metadata: { text: chunk } }]);
+
+// Retrieval
+const queryVec = await openai.embeddings.create({ input: query });
+const results = await pinecone.index.query({ vector: queryVec, topK: 5 });</code></pre></section>
+
+<section id="s8"><h2>8. Agents & LangChain</h2>
+<p><strong>Agent = Perceive → Reason → Act → Observe → Repeat</strong></p>
+<pre><code>// Multi-Agent Pipeline
+const analysis = await analyzer.run({ profile });
+const bio = await improver.run({ current: profile.bio, weaknesses: analysis.weaknesses });
+const openers = await generator.run({ profile: { ...profile, bio } });
+return { enhanced_profile: { ...profile, bio, openers } };</code></pre>
+<div class="warning">⚠️ <strong>When to use agents:</strong> Multi-step workflows, tool chaining, complex reasoning. ❌ Not for simple Q&A or creative writing.</div></section>
+
+<section id="s9"><h2>9. Evaluation & Observability</h2>
+<pre><code>// Hallucination Detection
+async function checkConsistency(answer, context) {
+  const prompt = `Does ANSWER contradict CONTEXT?
+CONTEXT: ${context}
+ANSWER: ${answer}
+JSON: {"contradicts": bool, "unsupported": []}`;
+  // LLM evaluation + rule-based checks
+}
+
+// Logging
+aiLogger.info('AI Interaction', {
+  type: 'response', userId: hash(id), tokens, latency, cost, confidence
+});</code></pre>
+</section>
+</main>
+<footer class="no-print" style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center;color:#64748b">
+<p>Episode 4 Complete | Next: Episode 5 - DevOps & Deployment<br>🖨️ Print/PDF: <code>Ctrl+P</code> → Save as PDF</p>
+</footer>
+</body>
+</html>

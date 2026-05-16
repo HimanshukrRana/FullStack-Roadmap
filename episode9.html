@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Episode 9: System Design | Full-Stack Curriculum</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script>
+<style>
+:root{--bg:#fff;--text:#111;--primary:#2563eb;--code-bg:#f5f7fa;--border:#e2e8f0;--note:#eff6ff;--warn:#fef2f2;--ok:#f0fdf4}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:var(--text);background:var(--bg);max-width:960px;margin:0 auto;padding:2rem}
+h1{border-bottom:3px solid var(--primary);padding-bottom:.5rem;margin-bottom:1rem}
+h2{margin-top:2.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+pre{background:var(--code-bg);padding:1rem;border-radius:6px;overflow-x:auto;border:1px solid var(--border);font-size:.9em}
+code{font-family:'Fira Code',Consolas,monospace}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
+th{background:#f1f5f9}
+.mermaid{display:flex;justify-content:center;margin:1.5rem 0}
+.note{background:var(--note);border-left:4px solid var(--primary);padding:1rem;margin:1rem 0;border-radius:0 6px 6px 0}
+@media print{body{max-width:100%;padding:1rem}pre{white-space:pre-wrap}.no-print{display:none}}</style>
+</head>
+<body>
+<header><h1>Episode 9: System Design</h1><p>LLD, HLD, Patterns, Architecture → Senior/Staff Level</p></header>
+<nav><h3>Contents</h3><a href="#s1">1. LLD Foundations</a><a href="#s2">2. Design Patterns</a><a href="#s3">3. HLD Framework</a><a href="#s4">4. Scalability Patterns</a><a href="#s5">5. Case Study: URL Shortener</a></nav>
+<main>
+<section style="margin:3rem 0 1rem;padding:1.25rem;border:1px solid var(--border);border-radius:14px;background:#f8fafc">
+<h2>Quick References & Next Steps</h2>
+<p>System design gets easier when you can connect capacity, data flow, and failure handling, so this panel collects practical references to keep nearby.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Key topics</h3>
+<ul>
+<li>LLD vs HLD and design trade-offs</li>
+<li>Caching, load balancing, and sharding</li>
+<li>Queues, async processing, and retries</li>
+<li>Scalability, observability, and failure recovery</li>
+</ul>
+</div>
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Reference links</h3>
+<ul>
+<li><a href="https://aws.amazon.com/architecture/" target="_blank" rel="noopener noreferrer">AWS Architecture Center</a></li>
+<li><a href="https://martinfowler.com/" target="_blank" rel="noopener noreferrer">Martin Fowler articles</a></li>
+<li><a href="https://github.com/donnemartin/system-design-primer" target="_blank" rel="noopener noreferrer">System Design Primer</a></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="s1"><h2>1. LLD Foundations</h2>
+<p><strong>SOLID Principles:</strong><br>• Single Responsibility<br>• Open/Closed<br>• Liskov Substitution<br>• Interface Segregation<br>• Dependency Inversion</p>
+<pre><code>// DIP Example
+class UserRepository { save(u){...} }
+class EmailService { send(msg){...} }
+
+class UserService {
+  constructor(repo, email) { this.repo=repo; this.email=email; }
+  register(data) {
+    const user = this.repo.create(data);
+    this.email.send(`Welcome ${user.name}`);
+  }
+}</code></pre></section>
+
+<section id="s2"><h2>2. Design Patterns</h2>
+<table><tr><th>Type</th><th>Pattern</th><th>Use Case</th></tr>
+<tr><td>Creational</td><td>Factory, Builder, Singleton*</td><td>Object creation abstraction</td></tr>
+<tr><td>Structural</td><td>Adapter, Facade, Proxy</td><td>Interface compatibility, controlled access</td></tr>
+<tr><td>Behavioral</td><td>Strategy, Observer, Command</td><td>Algorithms, event updates, action encapsulation</td></tr></table>
+<div class="note">⚠️ *Singleton: Use cautiously. Prefer dependency injection in modern codebases.</div></section>
+
+<section id="s3"><h2>3. HLD Framework</h2>
+<ol>
+<li><strong>Requirements:</strong> Functional (features) + Non-functional (scale, latency, availability)</li>
+<li><strong>Estimation:</strong> QPS, storage, bandwidth, connections</li>
+<li><strong>API Design:</strong> REST/GraphQL, endpoints, schemas, pagination</li>
+<li><strong>Data Model:</strong> SQL vs NoSQL, indexing, sharding strategy</li>
+</ol></section>
+
+<section id="s4"><h2>4. Scalability Patterns</h2>
+<div class="mermaid">graph LR
+A[Database Scaling] --> B[Read Replicas]
+A --> C[Sharding: Hash/Range/Directory]
+D[Caching] --> E[Cache-Aside]
+D --> F[Write-Through/Behind]
+D --> G[TTL + LRU Eviction]</div>
+<p><strong>Consistency Models:</strong> Strong (SQL, transactions) vs Eventual (NoSQL, CRDTs). Choose based on domain.</p></section>
+
+<section id="s5"><h2>5. Case Study: URL Shortener</h2>
+<div class="mermaid">graph LR
+A[Client] --> B[API Gateway]
+B --> C[Shorten Service]
+C --> D[Hash: Base62/Redis INCR]
+D --> E[(Distributed DB)]
+E --> F[Cache: Hot URLs]
+F --> G[Redirect Service]</div>
+<pre><code>// Hash Generation
+function encode(num, base62="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+  let res=""; while(num>0){ res=base62[num%62]+res; num=Math.floor(num/62); } return res;
+}
+
+// Cache-Aside
+async function getURL(shortKey) {
+  const cached = await redis.get(shortKey);
+  if(cached) return cached;
+  const long = await db.get(shortKey);
+  await redis.setEx(shortKey, 3600, long);
+  return long;
+}</code></pre>
+</section>
+</main>
+<footer class="no-print" style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center;color:#64748b">
+<p>🎉 Curriculum Complete | Next: Build Projects & Interview Prep<br>🖨️ Print/PDF: <code>Ctrl+P</code> → Save as PDF</p>
+</footer>
+</body>
+</html>

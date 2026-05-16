@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Episode 7: DSA with JavaScript | Full-Stack Curriculum</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script>
+<style>
+:root{--bg:#fff;--text:#111;--primary:#2563eb;--code-bg:#f5f7fa;--border:#e2e8f0;--note:#eff6ff;--warn:#fef2f2;--ok:#f0fdf4}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:var(--text);background:var(--bg);max-width:960px;margin:0 auto;padding:2rem}
+h1{border-bottom:3px solid var(--primary);padding-bottom:.5rem;margin-bottom:1rem}
+h2{margin-top:2.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+pre{background:var(--code-bg);padding:1rem;border-radius:6px;overflow-x:auto;border:1px solid var(--border);font-size:.9em}
+code{font-family:'Fira Code',Consolas,monospace}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
+th{background:#f1f5f9}
+.mermaid{display:flex;justify-content:center;margin:1.5rem 0}
+.note{background:var(--note);border-left:4px solid var(--primary);padding:1rem;margin:1rem 0;border-radius:0 6px 6px 0}
+@media print{body{max-width:100%;padding:1rem}pre{white-space:pre-wrap}.no-print{display:none}}</style>
+</head>
+<body>
+<header><h1>Episode 7: DSA with JavaScript</h1><p>Algorithms, Data Structures, Problem Solving → Interview Ready</p></header>
+<nav><h3>Contents</h3><a href="#s1">1. Time/Space Complexity</a><a href="#s2">2. Array/String Patterns</a><a href="#s3">3. Hash Maps & Sets</a><a href="#s4">4. Trees & Graphs</a><a href="#s5">5. Dynamic Programming</a><a href="#s6">6. Practice Strategy</a></nav>
+<main>
+<section id="s1"><h2>1. Time/Space Complexity</h2>
+<table><tr><th>Notation</th><th>Examples</th><th>When</th></tr>
+<tr><td>O(1)</td><td>Hash lookup, array access</td><td>Constant time</td></tr>
+<tr><td>O(log n)</td><td>Binary search, heap ops</td><td>Halving search space</td></tr>
+<tr><td>O(n)</td><td>Linear scan, BFS/DFS</td><td>Visit each element</td></tr>
+<tr><td>O(n log n)</td><td>Merge/quick sort</td><td>Divide & conquer</td></tr>
+<tr><td>O(n²)</td><td>Nested loops, bubble sort</td><td>Compare all pairs</td></tr></table></section>
+
+<section id="s2"><h2>2. Array/String Patterns</h2>
+<pre><code>// Two Pointer (Sorted Array)
+function twoSumSorted(arr, target) {
+  let l=0, r=arr.length-1;
+  while(l<r){
+    const sum=arr[l]+arr[r];
+    if(sum===target) return [l,r];
+    sum<target? l++ : r--;
+  }
+}
+
+// Sliding Window
+function longestUniqueSubstring(s) {
+  const map = new Map(); let max=0, l=0;
+  for(let r=0;r<s.length;r++){
+    if(map.has(s[r])) l = Math.max(l, map.get(s[r])+1);
+    map.set(s[r], r);
+    max = Math.max(max, r-l+1);
+  }
+  return max;
+}</code></pre></section>
+
+<section id="s3"><h2>3. Hash Maps & Sets</h2>
+<pre><code>// Frequency Counter + Two Sum
+function twoSum(nums, target) {
+  const map = new Map();
+  for(let i=0;i<nums.length;i++){
+    const comp = target - nums[i];
+    if(map.has(comp)) return [map.get(comp), i];
+    map.set(nums[i], i);
+  }
+}
+
+// Set for uniqueness
+function hasDuplicate(nums) {
+  return new Set(nums).size !== nums.length;
+}</code></pre></section>
+
+<section id="s4"><h2>4. Trees & Graphs</h2>
+<div class="mermaid">graph TD
+A[Root] --> B[Left] --> D[LL] --> F[LLL]
+A --> C[Right] --> E[RR]</div>
+<pre><code>// BFS Level Order
+function levelOrder(root) {
+  if(!root) return [];
+  const res=[], q=[root];
+  while(q.length){
+    const lvl=[];
+    for(let i=q.length;i>0;i--){
+      const n=q.shift(); lvl.push(n.val);
+      if(n.left) q.push(n.left);
+      if(n.right) q.push(n.right);
+    }
+    res.push(lvl);
+  }
+  return res;
+}</code></pre></section>
+
+<section id="s5"><h2>5. Dynamic Programming</h2>
+<pre><code>// Memoization (Top-Down)
+function fib(n, memo={}) {
+  if(n in memo) return memo[n];
+  if(n<=1) return n;
+  return memo[n] = fib(n-1,memo)+fib(n-2,memo);
+}
+
+// Tabulation (Bottom-Up)
+function fibTab(n) {
+  if(n<=1) return n;
+  const dp=[0,1];
+  for(let i=2;i<=n;i++) dp[i]=dp[i-1]+dp[i-2];
+  return dp[n];
+}</code></pre>
+<div class="note">🧠 <strong>DP Framework:</strong> 1. Define state 2. Base cases 3. Transition equation 4. Memoize/Tabulate</div></section>
+
+<section id="s6"><h2>6. Practice Strategy</h2>
+<ul>
+<li><strong>15 Core Patterns:</strong> Sliding window, two pointers, fast/slow, BFS/DFS, binary search, topological sort, Union-Find, backtracking, DP, greedy, heap, prefix sum, monotonic stack, trie, segment tree</li>
+<li><strong>Spaced Repetition:</strong> Review solved problems after 1d, 3d, 7d, 14d</li>
+<li><strong>Mock Interviews:</strong> Pramp, interviewing.io, pair programming</li>
+</ul>
+</section>
+</main>
+<section style="margin:3rem 0 1rem;padding:1.25rem;border:1px solid var(--border);border-radius:14px;background:#f8fafc">
+<h2>Quick References & Next Steps</h2>
+<p>Use this section when you want to move from theory into repeatable practice, especially for pattern recognition and timed problem solving.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Key topics</h3>
+<ul>
+<li>Big-O analysis and trade-offs</li>
+<li>Sliding window, two pointers, and hashing</li>
+<li>Trees, recursion, and BFS/DFS traversal</li>
+<li>Dynamic programming patterns and memoization</li>
+</ul>
+</div>
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Reference links</h3>
+<ul>
+<li><a href="https://leetcode.com/explore/" target="_blank" rel="noopener noreferrer">LeetCode Explore</a></li>
+<li><a href="https://visualgo.net/en" target="_blank" rel="noopener noreferrer">VisuAlgo</a></li>
+<li><a href="https://www.bigocheatsheet.com/" target="_blank" rel="noopener noreferrer">Big-O Cheat Sheet</a></li>
+</ul>
+</div>
+</div>
+</section>
+<footer class="no-print" style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center;color:#64748b">
+<p>Episode 7 Complete | Next: Episode 8 - Aptitude & Reasoning<br>🖨️ Print/PDF: <code>Ctrl+P</code> → Save as PDF</p>
+</footer>
+</body>
+</html>

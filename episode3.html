@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Episode 3: Node.js & Backend | Full-Stack Curriculum</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script>
+<style>
+:root{--bg:#fff;--text:#111;--primary:#2563eb;--code-bg:#f5f7fa;--border:#e2e8f0;--note:#eff6ff;--warn:#fef2f2;--ok:#f0fdf4}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:var(--text);background:var(--bg);max-width:960px;margin:0 auto;padding:2rem}
+h1{border-bottom:3px solid var(--primary);padding-bottom:.5rem;margin-bottom:1rem}
+h2{margin-top:2.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+h3{margin-top:1.5rem;color:#334155}
+pre{background:var(--code-bg);padding:1rem;border-radius:6px;overflow-x:auto;border:1px solid var(--border);font-size:.9em}
+code{font-family:'Fira Code',Consolas,monospace}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
+th{background:#f1f5f9}
+.mermaid{display:flex;justify-content:center;margin:1.5rem 0}
+.note{background:var(--note);border-left:4px solid var(--primary);padding:1rem;margin:1rem 0;border-radius:0 6px 6px 0}
+@media print{body{max-width:100%;padding:1rem}pre{white-space:pre-wrap}.no-print{display:none}}</style>
+</head>
+<body>
+<header><h1>Episode 3: Node.js, MongoDB & Backend</h1><p>Express, APIs, Auth, Databases → Production Backend</p></header>
+<nav><h3>Contents</h3><a href="#s1">1. Node.js Event Loop</a><a href="#s2">2. Express Middleware</a><a href="#s3">3. MongoDB & Mongoose</a><a href="#s4">4. REST API Design</a><a href="#s5">5. Auth & RBAC</a><a href="#s6">6. File Uploads & Caching</a><a href="#s7">7. Production Hardening</a></nav>
+<main>
+<section style="margin:3rem 0 1rem;padding:1.25rem;border:1px solid var(--border);border-radius:14px;background:#f8fafc">
+<h2>Quick References & Next Steps</h2>
+<p>Back-end work lives or dies by predictable request flow, validation, and secure data access, so this panel points you to the core docs and review material.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Key topics</h3>
+<ul>
+<li>Node.js event loop and async I/O</li>
+<li>Express middleware and REST API structure</li>
+<li>MongoDB modeling, indexes, and Mongoose schemas</li>
+<li>JWT auth, password hashing, and validation</li>
+</ul>
+</div>
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Reference links</h3>
+<ul>
+<li><a href="https://nodejs.org/en/docs" target="_blank" rel="noopener noreferrer">Node.js documentation</a></li>
+<li><a href="https://expressjs.com/" target="_blank" rel="noopener noreferrer">Express.js guide</a></li>
+<li><a href="https://www.mongodb.com/docs/" target="_blank" rel="noopener noreferrer">MongoDB documentation</a></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="s1"><h2>1. Node.js Event Loop</h2>
+<div class="mermaid">graph LR
+A[JS Code] --> B[Call Stack] --> C{Async?}
+C -->|Yes| D[Web APIs/Thread Pool] --> E[Callback Queue] --> F[Event Loop] --> B
+C -->|No| B</div>
+<pre><code>console.log('Start');
+setTimeout(() => console.log('Timer'), 0);
+Promise.resolve().then(() => console.log('Promise'));
+process.nextTick(() => console.log('nextTick'));
+console.log('End');
+// Output: Start → End → nextTick → Promise → Timer</code></pre></section>
+
+<section id="s2"><h2>2. Express Middleware</h2>
+<div class="mermaid">graph LR
+A[Request] --> B[App Middleware] --> C[Router Middleware] --> D[Handler] --> E[Error Handler] --> F[Response]</div>
+<pre><code>// Auth Middleware
+export const requireAuth = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+    next();
+  } catch(e) { next({ status: 401, message: 'Unauthorized' }); }
+};
+
+// Centralized Error Handler
+export const errorHandler = (err, req, res, next) => {
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message,
+    errors: err.errors,
+    stack: process.env.NODE_ENV === 'dev' ? err.stack : undefined
+  });
+};</code></pre></section>
+
+<section id="s3"><h2>3. MongoDB & Mongoose</h2>
+<pre><code>const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true, lowercase: true },
+  password: { type: String, required: true, minlength: 8, select: false },
+  profile: { name: String, avatar: String },
+  role: { type: String, enum: ['user','admin'], default: 'user' }
+}, { timestamps: true });
+
+// Hash password before save
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
+
+// Index for performance
+userSchema.index({ email: 1 });
+userSchema.index({ createdAt: -1 });</code></pre>
+<p><strong>Relationships:</strong> <code>populate()</code> for references, embedded arrays for denormalized data.</p></section>
+
+<section id="s4"><h2>4. REST API Design</h2>
+<div class="mermaid">graph LR
+A[/api/v1/users] --> B[GET List]
+A --> C[POST Create]
+D[/api/v1/users/:id] --> E[GET Single]
+D --> F[PUT Replace]
+D --> G[PATCH Update]
+D --> H[DELETE Remove]</div>
+<pre><code>// Validation with express-validator
+import { body, param } from 'express-validator';
+export const createUserValidator = [
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 8 }),
+  body('profile.name').optional().trim().isLength({ max: 50 })
+];
+
+// Route
+router.post('/', createUserValidator, validate, asyncHandler(createUser));</code></pre></section>
+
+<section id="s5"><h2>5. Auth & RBAC</h2>
+<div class="mermaid">sequenceDiagram
+Client->>Server: POST /login {email, pwd}
+Server->>DB: Verify
+Server->>Server: Gen access + refresh tokens
+Server-->>Client: { accessToken, refreshToken }
+Note over Client: Access expires (15m)
+Client->>Server: POST /refresh { refreshToken }
+Server->>DB: Verify + rotate
+Server-->>Client: New tokens</div>
+<pre><code>// Role-based access
+export const authorize = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) 
+    return next(new AppError(403, 'Insufficient permissions'));
+  next();
+};
+
+router.delete('/users/:id', requireAuth, authorize('admin'), deleteUser);</code></pre></section>
+
+<section id="s6"><h2>6. File Uploads & Caching</h2>
+<pre><code>// Multer + Cloudinary
+const storage = new CloudinaryStorage({ cloudinary, params: { 
+  folder: 'uploads', format: 'webp', 
+  transformation: [{ width: 1200, crop: 'limit' }] 
+}});
+export const upload = multer({ storage, limits: { fileSize: 5e6 } });
+
+// Redis Caching
+const cache = {
+  async getOrSet(key, fn, ttl = 3600) {
+    const cached = await redis.get(key);
+    if (cached) return JSON.parse(cached);
+    const data = await fn();
+    await redis.setEx(key, ttl, JSON.stringify(data));
+    return data;
+  }
+};</code></pre></section>
+
+<section id="s7"><h2>7. Production Hardening</h2>
+<pre><code>import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+
+app.use(helmet());
+app.use(mongoSanitize());
+app.use(rateLimit({ windowMs: 15*60*1000, max: 100 }));
+
+// PM2 Process Manager
+$ pm2 start ecosystem.config.js
+$ pm2 save && pm2 startup</code></pre>
+<div class="success">✅ <strong>Security Checklist:</strong><br>• Secrets in SSM/Params Store<br>• Least-privilege SGs<br>• HTTPS enforced<br>• Rate limiting on auth<br>• Input validation + sanitization</div>
+</section>
+</main>
+<footer class="no-print" style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center;color:#64748b">
+<p>Episode 3 Complete | Next: Episode 4 - Generative AI<br>🖨️ Print/PDF: <code>Ctrl+P</code> → Save as PDF</p>
+</footer>
+</body>
+</html>

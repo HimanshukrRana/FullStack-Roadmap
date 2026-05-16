@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Episode 1: Fundamental | Full-Stack Curriculum</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script>
+<style>
+:root{--bg:#fff;--text:#111;--primary:#2563eb;--code-bg:#f5f7fa;--border:#e2e8f0;--note:#eff6ff;--warn:#fef2f2;--ok:#f0fdf4}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:var(--text);background:var(--bg);max-width:960px;margin:0 auto;padding:2rem}
+h1{border-bottom:3px solid var(--primary);padding-bottom:.5rem;margin-bottom:1rem}
+h2{margin-top:2.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+h3{margin-top:1.5rem;color:#334155}
+nav{background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:2rem;border:1px solid var(--border)}
+nav a{display:block;padding:.4rem 0;color:var(--primary);text-decoration:none}
+nav a:hover{text-decoration:underline}
+pre{background:var(--code-bg);padding:1rem;border-radius:6px;overflow-x:auto;border:1px solid var(--border);font-size:.9em}
+code{font-family:'Fira Code',Consolas,monospace}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
+th{background:#f1f5f9;font-weight:600}
+.mermaid{display:flex;justify-content:center;margin:1.5rem 0}
+.note{background:var(--note);border-left:4px solid var(--primary);padding:1rem;margin:1rem 0;border-radius:0 6px 6px 0}
+.warning{background:var(--warn);border-left-color:#dc2626}
+.success{background:var(--ok);border-left-color:#16a34a}
+@media print{body{max-width:100%;padding:1rem}pre{white-space:pre-wrap;page-break-inside:avoid}.no-print{display:none}h2{page-break-after:avoid}}
+</style>
+</head>
+<body>
+<header><h1>Episode 1: Fundamental</h1><p>Internet, HTTP, HTML/CSS, JS Basics → Job-Ready Foundations</p></header>
+<nav><h3>Table of Contents</h3>
+<a href="#sec1">1. How the Internet Works</a>
+<a href="#sec2">2. Client-Server Architecture</a>
+<a href="#sec3">3. Internet Protocols: TCP vs UDP</a>
+<a href="#sec4">4. HTTP & HTTPS Deep Dive</a>
+<a href="#sec5">5. Setting Up Your Development Machine</a>
+<a href="#sec6">6. Semantic HTML & Browser Rendering</a>
+</nav>
+<main>
+<section id="sec1">
+<h2>1. How the Internet Works</h2>
+<h3>1.1 History of the Web</h3>
+<div class="mermaid">timeline
+    title Evolution of the Web
+    section Web 1.0 (1991-2004)
+        Static HTML pages : Read-only content
+        : No user interaction
+        : Examples: Yahoo, GeoCities
+    section Web 2.0 (2004-Present)
+        Dynamic content : User-generated content
+        : Social media, AJAX, APIs
+        : Examples: Facebook, YouTube
+    section Web 3.0 (Emerging)
+        Decentralized : Blockchain, AI, Semantic Web
+        : User ownership of data
+</div>
+<table><tr><th>Feature</th><th>Web 1.0</th><th>Web 2.0</th><th>Web 3.0</th></tr>
+<tr><td>Content</td><td>Static HTML</td><td>Dynamic, User-generated</td><td>Decentralized, AI-powered</td></tr>
+<tr><td>Interaction</td><td>Read-only</td><td>Read-Write</td><td>Read-Write-Own</td></tr>
+<tr><td>Data Control</td><td>Platform-owned</td><td>Platform-owned</td><td>User-owned</td></tr></table>
+
+<h3>1.2 How Computers Communicate</h3>
+<div class="mermaid">graph LR
+A[Application Layer<br/>Your Browser] --> B[Transport Layer<br/>TCP/UDP]
+B --> C[Network Layer<br/>IP Addressing]
+C --> D[Data Link Layer<br/>MAC Address]
+D --> E[Physical Layer<br/>Cables/WiFi]
+E --> F[Router/Switch] --> G[ISP Network] --> H[Destination Server]</div>
+<p>📦 <strong>Data Journey Packet Structure:</strong></p>
+<pre><code>┌─────────────────────────────┐
+│ Application Data (HTTP)     │ ← What you want to send
+├─────────────────────────────┤
+│ TCP Header                  │ ← Port numbers, sequencing
+├─────────────────────────────┤
+│ IP Header                   │ ← Source/Dest IP addresses
+├─────────────────────────────┤
+│ Ethernet Header             │ ← MAC addresses (local network)
+├─────────────────────────────┤
+│ Physical Signal (0s and 1s) │ ← Electrical/Optical transmission
+└─────────────────────────────┘</code></pre>
+
+<h3>1.3 DNS Resolution Flow</h3>
+<div class="mermaid">sequenceDiagram
+    participant U as User
+    participant B as Browser Cache
+    participant OS as OS/DNS Client
+    participant R as Recursive DNS Resolver
+    participant TLD as TLD Nameserver (.com)
+    participant A as Authoritative Nameserver
+    U->>B: Type "example.com"
+    B->>B: Check cache
+    alt Cache Hit
+        B-->>U: Return IP immediately
+    else Cache Miss
+        B->>OS: Request DNS lookup
+        OS->>R: Query recursive resolver
+        R->>TLD: Ask for .com nameserver
+        TLD-->>R: Return authoritative NS
+        R->>A: Query for example.com
+        A-->>R: Return IP: 93.184.216.34
+        R-->>OS: Cache & return IP
+        OS-->>B: Return IP
+        B->>A: Connect to IP
+    end</div>
+<div class="note">💡 <strong>Key Insight:</strong> MAC addresses never leave your local network. Routers strip and replace them at each hop using IP addresses for long-distance routing.</div>
+</section>
+
+<section id="sec2">
+<h2>2. Client-Server Architecture</h2>
+<h3>2.1 The Client-Server Model</h3>
+<div class="mermaid">graph LR
+subgraph Client Side
+A[Browser/App] --> B[Render UI]
+A --> C[Send HTTP Request]
+end
+subgraph Network
+C --> D[Internet/Routers]
+D --> E[Load Balancer]
+end
+subgraph Server Side
+E --> F[Web Server<br/>Nginx/Apache]
+F --> G[Application Server<br/>Node.js/Python]
+G --> H[(Database)]
+G --> I[Cache Layer<br/>Redis]
+H --> G --> F
+end
+F --> J[HTTP Response] --> D --> B</div>
+<table><tr><th>Aspect</th><th>Client (Browser)</th><th>Server (Backend)</th></tr>
+<tr><td>Role</td><td>Requests & displays data</td><td>Processes requests & serves data</td></tr>
+<tr><td>Environment</td><td>User's device (untrusted)</td><td>Controlled infrastructure (trusted)</td></tr>
+<tr><td>Code Visibility</td><td>Public (HTML/JS/CSS)</td><td>Private (source code hidden)</td></tr>
+<tr><td>Storage</td><td>LocalStorage, Cookies</td><td>Databases, Cloud storage</td></tr></table>
+
+<h3>2.2 HTTP Request/Response Cycle</h3>
+<div class="mermaid">sequenceDiagram
+participant U as User
+participant B as Browser
+participant N as Network
+participant S as Server
+participant D as Database
+U->>B: Clicks link / Types URL
+B->>B: Parse URL, check cache
+B->>N: DNS Resolution
+N-->>B: Return IP address
+B->>S: TCP 3-Way Handshake
+B->>S: TLS Handshake (HTTPS)
+B->>S: HTTP Request
+Note right of B: GET /api/users HTTP/1.1<br/>Host: example.com
+S->>D: Query database
+D-->>S: Return data
+S->>S: Process & format response
+S->>B: HTTP Response
+Note left of B: HTTP/1.1 200 OK<br/>Content-Type: application/json
+B->>U: Render updated page</div>
+</section>
+
+<section id="sec3">
+<h2>3. Internet Protocols: TCP vs UDP</h2>
+<h3>3.1 TCP 3-Way Handshake</h3>
+<pre><code>Client                          Server
+   |--- SYN (seq=x) ------------->|  1. Request connection
+   |<-- SYN-ACK (seq=y, ack=x+1) --|  2. Acknowledge + request
+   |--- ACK (ack=y+1) ------------>|  3. Confirm
+   |====== Connection Established ======|
+   |--- Data Packets ------------->|
+   |<-- Acknowledgments -----------|</code></pre>
+<h3>3.2 TCP vs UDP</h3>
+<table><tr><th>Feature</th><th>TCP</th><th>UDP</th></tr>
+<tr><td>Connection</td><td>Connection-oriented (handshake)</td><td>Connectionless</td></tr>
+<tr><td>Reliability</td><td>✅ Guaranteed delivery</td><td>❌ No guarantees</td></tr>
+<tr><td>Ordering</td><td>✅ Packets arrive in order</td><td>❌ May arrive out of order</td></tr>
+<tr><td>Speed</td><td>🐌 Slower (reliability overhead)</td><td>⚡ Faster (minimal overhead)</td></tr>
+<tr><td>Use Cases</td><td>Web, Email, Files</td><td>Video calls, Gaming, DNS</td></tr></table>
+<div class="success">📦 TCP = Registered Mail (tracked, reliable)<br>📦 UDP = Postcard (fast, may get lost)</div>
+</section>
+
+<section id="sec4">
+<h2>4. HTTP & HTTPS Deep Dive</h2>
+<h3>4.1 HTTP Status Codes</h3>
+<pre><code>200 OK          → Success
+201 Created     → Resource created (POST)
+301/302         → Redirects
+400 Bad Request → Client sent invalid data
+401 Unauthorized→ Login required
+403 Forbidden   → No permission
+404 Not Found   → Resource missing
+429 Too Many    → Rate limited
+500 Server Error→ Bug on server</code></pre>
+<h3>4.2 HTTPS: Security Flow</h3>
+<div class="mermaid">sequenceDiagram
+participant C as Client
+participant S as Server
+participant CA as Certificate Authority
+Note over C,S: 1. Client Hello
+C->>S: Supported TLS versions, cipher suites
+Note over C,S: 2. Server Hello + Certificate
+S->>C: Chosen TLS version, certificate
+C->>CA: Verify certificate signature
+CA-->>C: Certificate valid ✅
+Note over C,S: 3. Key Exchange
+C->>S: Client public key + encrypted pre-master
+S->>C: Acknowledgment
+Note over C,S: 4. Generate Session Keys (Symmetric)
+C->>C: Derive keys
+S->>S: Derive same keys
+Note over C,S: 5. Encrypted Communication
+C->>S: 🔐 Encrypted HTTP request
+S->>C: 🔐 Encrypted HTTP response</div>
+<div class="note">🔐 <strong>Critical Headers:</strong><br><code>Strict-Transport-Security: max-age=31536000; includeSubDomains</code><br><code>Content-Security-Policy: default-src 'self'</code></div>
+</section>
+
+<section id="sec5">
+<h2>5. Setting Up Your Development Machine</h2>
+<h3>5.1 VS Code Extensions</h3>
+<pre><code>{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "ritwickdey.liveserver",
+    "ritwickdey.liveserver",
+    "ms-vscode.live-server"
+  ]
+}</code></pre>
+<h3>5.2 Browser DevTools Workflow</h3>
+<ol>
+<li><strong>Elements Panel:</strong> Inspect/edit HTML/CSS live</li>
+<li><strong>Console:</strong> Debug JS, check errors</li>
+<li><strong>Network:</strong> Monitor API calls, status codes, timing</li>
+<li><strong>Sources:</strong> Set breakpoints, step through code</li>
+<li><strong>Application:</strong> Manage localStorage/cookies</li>
+</ol>
+<div class="warning">⚠️ <strong>Pro Tip:</strong> Never remove <code>outline</code> from focus states without providing an alternative. Accessibility is mandatory for production.</div>
+</section>
+
+<section id="sec6">
+<h2>6. Semantic HTML & Browser Rendering</h2>
+<h3>6.1 Critical Rendering Path</h3>
+<div class="mermaid">graph LR
+A[HTML] --> B[DOM Tree]
+C[CSS] --> D[CSSOM Tree]
+B & D --> E[Render Tree]
+E --> F[Layout/Reflow]
+F --> G[Paint]
+G --> H[Composite]
+H --> I[Display on Screen]</div>
+<h3>6.2 Semantic Tags Guide</h3>
+<table><tr><th>Tag</th><th>Purpose</th><th>When to Use</th></tr>
+<tr><td><code>&lt;header&gt;</code></td><td>Introductory content</td><td>Site header, article header</td></tr>
+<tr><td><code>&lt;nav&gt;</code></td><td>Navigation links</td><td>Primary menu, breadcrumbs</td></tr>
+<tr><td><code>&lt;main&gt;</code></td><td>Primary content</td><td>One per page, excludes header/footer</td></tr>
+<tr><td><code>&lt;article&gt;</code></td><td>Independent content</td><td>Blog posts, product cards</td></tr>
+<tr><td><code>&lt;section&gt;</code></td><td>Thematic grouping</td><td>Only use if heading is present</td></tr></table>
+<h3>6.3 Accessible Form Pattern</h3>
+<pre><code>&lt;form id="signup-form" novalidate&gt;
+  &lt;fieldset&gt;
+    &lt;legend&gt;Account Information&lt;/legend&gt;
+    &lt;label for="email"&gt;Email&lt;/label&gt;
+    &lt;input type="email" id="email" name="email" required 
+           aria-describedby="email-hint email-error"&gt;
+    &lt;span id="email-hint"&gt;We'll never share your email.&lt;/span&gt;
+    &lt;span id="email-error" role="alert" hidden&gt;&lt;/span&gt;
+  &lt;/fieldset&gt;
+  &lt;button type="submit"&gt;Create Account&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<div class="success">✅ <strong>Accessibility Checklist:</strong><br>
+• One <code>&lt;h1&gt;</code> per page<br>
+• All inputs have labels<br>
+• Color contrast ≥ 4.5:1<br>
+• Focus indicators visible<br>
+• Dynamic updates use <code>aria-live</code></div>
+</section>
+</main>
+<section style="margin:3rem 0 1rem;padding:1.25rem;border:1px solid var(--border);border-radius:14px;background:#f8fafc">
+<h2>Quick References & Next Steps</h2>
+<p>Revisit the foundational layers here when you want to refresh the web stack from browser to server and keep the core terms sharp.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Key topics</h3>
+<ul>
+<li>DNS resolution and browser caching</li>
+<li>TCP vs UDP, ports, and packet flow</li>
+<li>HTTP/HTTPS, status codes, and TLS basics</li>
+<li>Semantic HTML and the rendering pipeline</li>
+</ul>
+</div>
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Reference links</h3>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Learn/Getting_started_with_the_web/How_the_Web_works" target="_blank" rel="noopener noreferrer">MDN: How the web works</a></li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc9110" target="_blank" rel="noopener noreferrer">RFC 9110: HTTP Semantics</a></li>
+<li><a href="https://html.spec.whatwg.org/" target="_blank" rel="noopener noreferrer">WHATWG HTML Living Standard</a></li>
+</ul>
+</div>
+</div>
+</section>
+<footer class="no-print" style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center;color:#64748b">
+<p>Episode 1 Complete | Next: Episode 2 - React & Frontend Architecture<br>🖨️ Print/PDF: <code>Ctrl+P</code> → Save as PDF</p>
+</footer>
+</body>
+</html>

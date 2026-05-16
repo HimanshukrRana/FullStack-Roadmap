@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Episode 5: DevOps & Deployment | Full-Stack Curriculum</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script>
+<style>
+:root{--bg:#fff;--text:#111;--primary:#2563eb;--code-bg:#f5f7fa;--border:#e2e8f0;--note:#eff6ff;--warn:#fef2f2;--ok:#f0fdf4}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:var(--text);background:var(--bg);max-width:960px;margin:0 auto;padding:2rem}
+h1{border-bottom:3px solid var(--primary);padding-bottom:.5rem;margin-bottom:1rem}
+h2{margin-top:2.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+pre{background:var(--code-bg);padding:1rem;border-radius:6px;overflow-x:auto;border:1px solid var(--border);font-size:.9em}
+code{font-family:'Fira Code',Consolas,monospace}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
+th{background:#f1f5f9}
+.mermaid{display:flex;justify-content:center;margin:1.5rem 0}
+.note{background:var(--note);border-left:4px solid var(--primary);padding:1rem;margin:1rem 0;border-radius:0 6px 6px 0}
+@media print{body{max-width:100%;padding:1rem}pre{white-space:pre-wrap}.no-print{display:none}}</style>
+</head>
+<body>
+<header><h1>Episode 5: DevOps & Deployment</h1><p>Docker, AWS, CI/CD, Monitoring → Production Systems</p></header>
+<nav><h3>Contents</h3><a href="#s1">1. Environments & Linux</a><a href="#s2">2. Docker & Compose</a><a href="#s3">3. AWS EC2 & Security</a><a href="#s4">4. Load Balancing</a><a href="#s5">5. CDN & CloudFront</a><a href="#s6">6. CI/CD Pipelines</a><a href="#s7">7. Scalability</a><a href="#s8">8. Monitoring</a><a href="#s9">9. Runbooks</a></nav>
+<main>
+<section style="margin:3rem 0 1rem;padding:1.25rem;border:1px solid var(--border);border-radius:14px;background:#f8fafc">
+<h2>Quick References & Next Steps</h2>
+<p>Deployment becomes much easier when containerization, CI/CD, and observability are treated as a single workflow instead of isolated tools.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Key topics</h3>
+<ul>
+<li>Docker images, layers, and multi-stage builds</li>
+<li>CI/CD pipelines and release automation</li>
+<li>AWS compute, storage, and deployment options</li>
+<li>Monitoring, metrics, logs, and alerts</li>
+</ul>
+</div>
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Reference links</h3>
+<ul>
+<li><a href="https://docs.docker.com/" target="_blank" rel="noopener noreferrer">Docker documentation</a></li>
+<li><a href="https://docs.aws.amazon.com/whitepapers/latest/aws-well-architected-framework/welcome.html" target="_blank" rel="noopener noreferrer">AWS Well-Architected Framework</a></li>
+<li><a href="https://docs.github.com/actions" target="_blank" rel="noopener noreferrer">GitHub Actions docs</a></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="s1"><h2>1. Environments & Linux</h2>
+<div class="mermaid">graph LR
+A[Dev] -->|PR| B[Staging] -->|Test+Approve| C[Production]</div>
+<pre><code># Essential Commands
+ps aux | grep node          # Find processes
+kill -15 &lt;PID&gt;             # Graceful shutdown
+tail -f /var/log/app.log    # Follow logs
+ss -tlnp                    # Listening ports
+sudo ufw allow 22,80,443    # Firewall rules</code></pre></section>
+
+<section id="s2"><h2>2. Docker & Compose</h2>
+<pre><code># Dockerfile (Multi-stage)
+FROM node:18-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+FROM node:18-alpine AS production
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+USER nodejs
+EXPOSE 80
+CMD ["node", "dist/server.js"]</code></pre>
+<pre><code># docker-compose.yml
+services:
+  app:
+    build: .
+    ports: ["3000:80"]
+    depends_on: [mongo, redis]
+  mongo:
+    image: mongo:6
+    volumes: [mongo-data:/data/db]
+  redis:
+    image: redis:7-alpine</code></pre></section>
+
+<section id="s3"><h2>3. AWS EC2 & Security</h2>
+<div class="mermaid">graph LR
+A[Internet] -->|443| B[ALB] -->|80| C[EC2 Private] -->|27017| D[RDS Private]</div>
+<pre><code># Bootstrap (user-data.sh)
+yum update -y
+curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
+yum install -y nodejs
+npm install -g pm2
+# ... setup app, nginx, systemd service</code></pre>
+<div class="success">🔐 <strong>Security Groups:</strong> Least privilege. ALB → 443. EC2 → 80 from ALB only. DB → 27017 from EC2 only. SSH → Bastion IP only.</div></section>
+
+<section id="s4"><h2>4. Load Balancing & Auto Scaling</h2>
+<pre><code># Terraform: ALB + ASG
+resource "aws_autoscaling_group" "app" {
+  min_size = 2; max_size = 10
+  target_group_arns = [aws_lb_target_group.app.arn]
+  health_check_type = "ELB"
+}
+
+resource "aws_autoscaling_policy" "cpu" {
+  target_tracking_configuration {
+    predefined_metric_specification { predefined_metric_type = "ASGAverageCPUUtilization" }
+    target_value = 70.0
+  }
+}</code></pre></section>
+
+<section id="s5"><h2>5. CDN & CloudFront</h2>
+<pre><code>// Cache headers by extension
+const cacheControl = {
+  'js':'public, max-age=31536000, immutable',
+  'css':'public, max-age=31536000, immutable',
+  'html':'public, max-age=300, stale-while-revalidate=3600'
+};
+res.set('Cache-Control', cacheControl[ext] || 'no-store');</code></pre>
+<div class="note">🌍 <strong>Cache Invalidation:</strong> Versioned filenames (best), query busting, or CloudFront API (limited free tier).</div></section>
+
+<section id="s6"><h2>6. CI/CD with GitHub Actions</h2>
+<pre><code># .github/workflows/deploy.yml
+name: Deploy
+on: [push.main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm test
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+      - run: aws ecs update-service --cluster prod --service api --force-new-deployment</code></pre></section>
+
+<section id="s7"><h2>7. Scalability</h2>
+<div class="mermaid">graph LR
+A[Bottleneck?] -->|CPU/RAM| B[Vertical Scale]
+A -->|Requests| C[Horizontal Scale]
+A -->|DB| D[Read Replicas/Sharding]
+A -->|Code| E[Optimize/Caching]</div>
+<div class="warning">⚠️ <strong>Stateless Design:</strong> Mandatory for horizontal scaling. Use Redis for sessions/cache. Avoid in-memory state.</div></section>
+
+<section id="s8"><h2>8. Monitoring</h2>
+<pre><code>// Structured Logging
+import winston from 'winston';
+const logger = winston.createLogger({
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  transports: [new winston.transports.Console()]
+});
+
+// CloudWatch Alarms
+{ "AlarmName": "5xx-Errors", "MetricName": "HTTPCode_ELB_5XX_Count",
+  "Threshold": 10, "ComparisonOperator": "GreaterThanThreshold" }</code></pre></section>
+
+<section id="s9"><h2>9. Incident Runbook</h2>
+<pre><code>1. Acknowledge alert
+2. Check CloudWatch Dashboard
+3. Assess: Error spike? Latency? 5xx?
+4. Mitigate: Rollback / Scale / Maintenance mode
+5. Post-mortem: Root cause + prevention</code></pre>
+</section>
+</main>
+<footer class="no-print" style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center;color:#64748b">
+<p>Episode 5 Complete | Next: Episode 6 - Scaling & Web3<br>🖨️ Print/PDF: <code>Ctrl+P</code> → Save as PDF</p>
+</footer>
+</body>
+</html>

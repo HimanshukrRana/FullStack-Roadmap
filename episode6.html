@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Episode 6: Scaling, Microservices & Web3 | Full-Stack Curriculum</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script>
+<style>
+:root{--bg:#fff;--text:#111;--primary:#2563eb;--code-bg:#f5f7fa;--border:#e2e8f0;--note:#eff6ff;--warn:#fef2f2;--ok:#f0fdf4}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:var(--text);background:var(--bg);max-width:960px;margin:0 auto;padding:2rem}
+h1{border-bottom:3px solid var(--primary);padding-bottom:.5rem;margin-bottom:1rem}
+h2{margin-top:2.5rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+pre{background:var(--code-bg);padding:1rem;border-radius:6px;overflow-x:auto;border:1px solid var(--border);font-size:.9em}
+code{font-family:'Fira Code',Consolas,monospace}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{border:1px solid var(--border);padding:.6rem;text-align:left}
+th{background:#f1f5f9}
+.mermaid{display:flex;justify-content:center;margin:1.5rem 0}
+.note{background:var(--note);border-left:4px solid var(--primary);padding:1rem;margin:1rem 0;border-radius:0 6px 6px 0}
+@media print{body{max-width:100%;padding:1rem}pre{white-space:pre-wrap}.no-print{display:none}}</style>
+</head>
+<body>
+<header><h1>Episode 6: Scaling, Microservices & Web3</h1><p>Distributed Systems, Event-Driven Architecture, Blockchain → Enterprise Scale</p></header>
+<nav><h3>Contents</h3><a href="#s1">1. Microservices vs Monolith</a><a href="#s2">2. Service Communication</a><a href="#s3">3. Event-Driven Architecture</a><a href="#s4">4. AWS Cloud-Native</a><a href="#s5">5. Observability</a><a href="#s6">6. Web3 Fundamentals</a></nav>
+<main>
+<section id="s1"><h2>1. Microservices vs Monolith</h2>
+<table><tr><th>Factor</th><th>Monolith</th><th>Microservices</th></tr>
+<tr><td>Deployment</td><td>Single unit</td><td>Independent services</td></tr>
+<tr><td>Scaling</td><td>Vertical/whole app</td><td>Per-service horizontal</td></tr>
+<tr><td>Complexity</td><td>Low initial, high later</td><td>High initial, manageable later</td></tr>
+<tr><td>Team Structure</td><td>Feature teams</td><td>Domain teams</td></tr></table>
+<div class="note">⚖️ <strong>Rule:</strong> Don't start with microservices. Split when monolith becomes bottleneck (team size, deployment frequency, scaling needs).</div></section>
+
+<section id="s2"><h2>2. Service Communication</h2>
+<div class="mermaid">graph LR
+A[Client] --> B[API Gateway] --> C[Auth Service]
+B --> D[Order Service]
+B --> E[Payment Service]
+D -->|Sync REST| E
+E -->|Async Event| F[Notification Service]</div>
+<pre><code>// Circuit Breaker Pattern
+import { CircuitBreaker } from 'opossum';
+const breaker = new CircuitBreaker(externalAPI, {
+  timeout: 3000, errorThresholdPercentage: 50, resetTimeout: 30000
+});
+breaker.fallback(() => cachedResponse);</code></pre></section>
+
+<section id="s3"><h2>3. Event-Driven Architecture</h2>
+<pre><code>// RabbitMQ Publisher
+await channel.publish('orders', '', Buffer.from(JSON.stringify({ orderId, userId })));
+
+// RabbitMQ Consumer
+channel.consume('order-events', msg => {
+  const data = JSON.parse(msg.content);
+  processOrder(data);
+  channel.ack(msg); // Idempotency key handling required
+});</code></pre>
+<div class="success">✅ <strong>Event Schema:</strong> Use CloudEvents standard. Include: id, source, type, time, data. Ensure idempotency with Redis/set.</div></section>
+
+<section id="s4"><h2>4. AWS Cloud-Native</h2>
+<p>• <strong>ECR:</strong> Container registry<br>• <strong>ECS Fargate:</strong> Serverless containers<br>• <strong>Terraform:</strong> IaC for VPC, SGs, ALB, Cluster<br>• <strong>VPC Design:</strong> Public subnets (ALB), Private subnets (Services), NAT Gateway for outbound</p></section>
+
+<section id="s5"><h2>5. Distributed Observability</h2>
+<pre><code>import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+
+const provider = new NodeTracerProvider();
+provider.addSpanProcessor(new BatchSpanProcessor(new OTLPTraceExporter()));
+provider.register();</code></pre>
+<p><strong>Three Pillars:</strong> Logs (structured), Metrics (Grafana/CloudWatch), Traces (OpenTelemetry).</p></section>
+
+<section id="s6"><h2>6. Web3 Fundamentals</h2>
+<div class="mermaid">graph LR
+A[Frontend: React + ethers.js] --> B[Wallet: MetaMask]
+B --> C[Blockchain: Ethereum/Polygon]
+C --> D[Smart Contract: Solidity]</div>
+<p>• <strong>Blockchain:</strong> Immutable ledger, consensus (PoS)<br>• <strong>Smart Contracts:</strong> Self-executing code on-chain<br>• <strong>dApp:</strong> Decentralized app (no central server)<br>• <strong>Use Cases:</strong> Tokenization, provenance, DAOs, NFTs</p>
+<div class="warning">⚠️ <strong>When NOT to use Web3:</strong> Traditional SaaS, high-frequency trading, personal data storage, simple CRUD apps.</div>
+</section>
+</main>
+<section style="margin:3rem 0 1rem;padding:1.25rem;border:1px solid var(--border);border-radius:14px;background:#f8fafc">
+<h2>Quick References & Next Steps</h2>
+<p>These patterns matter most when services start talking to each other, so use the links below to compare event-driven design, tracing, and blockchain fundamentals.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Key topics</h3>
+<ul>
+<li>Microservice boundaries and distributed data</li>
+<li>Event-driven messaging and retries</li>
+<li>Tracing, observability, and correlation IDs</li>
+<li>Web3 basics, smart contracts, and wallets</li>
+</ul>
+</div>
+<div style="background:#fff;padding:1rem;border-radius:12px;border:1px solid var(--border)">
+<h3>Reference links</h3>
+<ul>
+<li><a href="https://opentelemetry.io/docs/" target="_blank" rel="noopener noreferrer">OpenTelemetry docs</a></li>
+<li><a href="https://cloudevents.io/" target="_blank" rel="noopener noreferrer">CloudEvents specification</a></li>
+<li><a href="https://ethereum.org/en/developers/docs/" target="_blank" rel="noopener noreferrer">Ethereum developer docs</a></li>
+</ul>
+</div>
+</div>
+</section>
+<footer class="no-print" style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--border);text-align:center;color:#64748b">
+<p>Episode 6 Complete | Next: Episode 7 - DSA with JavaScript<br>🖨️ Print/PDF: <code>Ctrl+P</code> → Save as PDF</p>
+</footer>
+</body>
+</html>
